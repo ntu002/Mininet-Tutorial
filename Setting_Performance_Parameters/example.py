@@ -6,6 +6,7 @@ from mininet.node import CPULimitedHost
 from mininet.link import TCLink
 from mininet.util import dumpNodeConnections
 from mininet.log import setLogLevel
+from time import sleep
 
 class SingleSwitchTopo(Topo):
     "Single switch connected to n hosts."
@@ -33,6 +34,33 @@ def perfTest():
     net.iperf((h1, h4))
     net.stop()
 
+def sleepTest():
+    "Create network and run simple performance test"
+    topo = SingleSwitchTopo(n=4)
+    net = Mininet(topo=topo,
+	           host=CPULimitedHost, link=TCLink)
+    net.start()
+    print("Dumping host connections")
+    dumpNodeConnections(net.hosts)
+    print("Testing network connectivity")
+    net.pingAll()
+    h1 = h1.get('h1')
+    print("Starting test...")
+    h1.cmd('While true; do date; sleep 1; done > /tmp/date.out')
+    sleep(10)
+    print("Stopping test")
+    h1.cmd('kill %while')
+    print("Reading output")
+    f = open('/tmp/date.out')
+    lineno = 1
+    for line in f.readlines():
+        print("%d: %s" % (lineno, line.strip()))
+        lineno += 1
+    f.close()
+
+    net.stop()
+
 if __name__ == '__main__':
     setLogLevel('info')
     perfTest()
+    #sleepTest()
